@@ -1,0 +1,112 @@
+networks:
+  dev:
+    driver: bridge
+
+services:
+  nginx:
+    image: nginx:1.27.2
+    container_name: nginx_tweet_dev
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./nginx:/etc/nginx/conf.d/
+    networks:
+      - dev
+
+  # redis:
+  #   image: docker.io/bitnami/redis:7.4
+  #   container_name: redis_tweet_dev
+  #   environment:
+  #     # ALLOW_EMPTY_PASSWORD is recommended only for development.
+  #     - ALLOW_EMPTY_PASSWORD=yes
+  #     - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+  #   ports:
+  #     - 6379:6379
+  #   volumes:
+  #     - redis_data:/bitnami/redis/data
+  #   networks:
+  #     - dev
+
+  # nats:
+  #   image: nats:2.10-alpine
+  #   container_name: nats_tweet_dev
+  #   restart: always
+  #   command: -c /etc/nats/nats.conf
+  #   ports:
+  #     - "4222:4222" # client port
+  #     - "6222:6222" # cluster port
+  #     - "8222:8222" # monitoring port
+  #   volumes:
+  #     - ./nats.conf:/etc/nats/nats.conf
+  #     - $JETSTREAM_STORAGE:/data
+  #   networks:
+  #     - dev
+
+  database:
+    container_name: postgresql_tweet_dev
+    image: postgres:17.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=pg
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=twitter
+    ports:
+      - 5432:5432
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    logging:
+      driver: none
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    networks:
+      - dev
+
+  auth:
+    build: ./auth
+    ports:
+      - 8081:8081
+    image: dev-auth
+    container_name: auth_tweet_dev
+    tty: true
+    restart: unless-stopped
+    networks:
+      - dev
+
+  timeline:
+    build: ./timeline
+    ports:
+      - 8082:8082
+    image: dev-timeline
+    container_name: timeline_tweet_dev
+    tty: true
+    restart: unless-stopped
+    networks:
+      - dev
+
+  tweet:
+    build: ./tweet
+    ports:
+      - 8083:8083
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    image: dev-tweet
+    container_name: tweets_tweet_dev
+    environment:
+      - DATABASE_URL=postgresql://pg:pass@database:5432/twitter?sslmode=disable
+    tty: true
+    restart: unless-stopped
+    networks:
+      - dev
+
+volumes:
+  redis_data:
+    driver: local
+  postgresql_data:
+    driver: local
