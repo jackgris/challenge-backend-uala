@@ -10,10 +10,11 @@
 
 ### Run the project
 
-You can run all the project using Docker compose.
+You can run the project using Docker Compose.
 
 ```bash
 docker compose up --build
 ```
+Here ![NOTES](NOTES.md) you can read more data about the project.
 
-Also you have some usefully commands with `make` you can the detail running `make help`
+Also, you have some useful commands with `make` you can the detail running `make help`
