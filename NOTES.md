@@ -9,6 +9,7 @@ https://encore.dev/blog/go-1.18-generic-identifiers
 
 
 ### I should add this tools:
+CI/CD: Github Actions
 Gherkin: for E2E test
 API documentation: OpenAPI - Swagger
 Tracing: OpenTelemetry and Jaeger

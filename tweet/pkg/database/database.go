@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
 )
 
 func ConnectDB(ctx context.Context, log *logger.Logger) *pgx.Conn {

@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/handler"
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/store/tweetdb"
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/database"
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/internal/handler"
+	"github.com/jackgris/twitter-backend/tweet/internal/store/tweetdb"
+	"github.com/jackgris/twitter-backend/tweet/pkg/database"
+	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
 )
 
 func main() {

@@ -1,3 +1,3 @@
-module github.com/jackgris/challenge-backend-uala/timeline
+module github.com/jackgris/twitter-backend/timeline
 
 go 1.23.2

@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/domain/tweetmodel"
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/logger"
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/middleware"
+	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
+	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/pkg/middleware"
 )
 
 type TweetHandler struct {

@@ -8,8 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/domain/tweetmodel"
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/store/tweetdb"
+	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
+	"github.com/jackgris/twitter-backend/tweet/internal/store/tweetdb"
 	"github.com/rs/xid"
 )
 

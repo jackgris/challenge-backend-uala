@@ -1,4 +1,4 @@
-module github.com/jackgris/challenge-backend-uala/tweet
+module github.com/jackgris/twitter-backend/tweet
 
 go 1.23.2
 

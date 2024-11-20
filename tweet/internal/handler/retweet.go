@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/domain/tweetmodel"
+	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
 	"github.com/rs/xid"
 )
 

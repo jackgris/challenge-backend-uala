@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
 )
 
 type loggingResponseWriter struct {

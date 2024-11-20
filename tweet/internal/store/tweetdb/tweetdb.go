@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/domain/tweetmodel"
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/store"
+	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
+	"github.com/jackgris/twitter-backend/tweet/internal/store"
 	"github.com/rs/xid"
 )
 

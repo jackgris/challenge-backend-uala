@@ -3,7 +3,7 @@ package handler
 import (
 	"time"
 
-	"github.com/jackgris/challenge-backend-uala/tweet/internal/domain/tweetmodel"
+	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
 )
 
 type Tweet struct {
