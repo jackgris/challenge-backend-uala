@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -34,16 +35,15 @@ func run(ctx context.Context, log *logger.Logger) error {
 	store := tweetdb.NewStore(db)
 	mux := handler.NewHandler(store, log)
 
-	// portEnv := os.Getenv("PORT")
-	// port, err := strconv.Atoi(portEnv)
-	// if err != nil {
-	// 	log.Error(ctx, "Environment variable PORT converting to integer")
-	// 	os.Exit(1)
-	// }
-	port := "8083"
+	portEnv := os.Getenv("PORT")
+	port, err := strconv.Atoi(portEnv)
+	if err != nil {
+		log.Error(ctx, "Environment variable PORT converting to integer")
+		os.Exit(1)
+	}
 
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + strconv.Itoa(port),
 		Handler: mux,
 	}
 
