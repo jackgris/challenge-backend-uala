@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
 	"github.com/jackgris/twitter-backend/tweet/internal/store/tweetdb"
-	"github.com/rs/xid"
+	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
 func (t TweetHandler) createTweet(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +26,11 @@ func (t TweetHandler) createTweet(w http.ResponseWriter, r *http.Request) {
 
 	if input.UserID == "" || input.Content == "" {
 		http.Error(w, "user_id and content are required", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.UserID); !ok {
+		http.Error(w, "user id invalid", http.StatusBadRequest)
 		return
 	}
 
@@ -58,13 +63,12 @@ func (t TweetHandler) getTweetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := xid.FromString(tweetID)
-	if err != nil {
+	if ok := uuid.IsValid(tweetID); !ok {
 		http.Error(w, "tweet id invalid", http.StatusBadRequest)
 		return
 	}
 
-	tweet, err := t.store.GetByID(id.String())
+	tweet, err := t.store.GetByID(tweetID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Tweet not found", http.StatusNotFound)
@@ -86,13 +90,12 @@ func (t TweetHandler) deleteTweet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := xid.FromString(tweetID)
-	if err != nil {
+	if ok := uuid.IsValid(tweetID); !ok {
 		http.Error(w, "tweet id invalid", http.StatusBadRequest)
 		return
 	}
 
-	err = t.store.Delete(id.String())
+	err := t.store.Delete(tweetID)
 	if errors.Is(err, tweetdb.ErrDeleteTweet) {
 		http.Error(w, "Tweet not found", http.StatusNotFound)
 		return

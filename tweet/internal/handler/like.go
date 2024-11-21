@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
-	"github.com/rs/xid"
+	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
 func (t TweetHandler) likeTweet(w http.ResponseWriter, r *http.Request) {
@@ -24,18 +24,22 @@ func (t TweetHandler) likeTweet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := xid.FromString(input.TweetID)
-	if err != nil {
+	if ok := uuid.IsValid(input.UserID); !ok {
+		http.Error(w, "user id invalid", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.TweetID); !ok {
 		http.Error(w, "tweet id invalid", http.StatusBadRequest)
 		return
 	}
 
 	like := tweetmodel.Like{
-		TweetID: id.String(),
+		TweetID: input.TweetID,
 		UserID:  input.UserID,
 	}
 
-	like, err = t.store.Like(like)
+	like, err := t.store.Like(like)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to add like to tweet ID: %s", like.TweetID), http.StatusInternalServerError)
 		return
@@ -63,25 +67,28 @@ func (t TweetHandler) dislikeTweet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tweetID, err := xid.FromString(input.TweetID)
-	if err != nil {
+	if ok := uuid.IsValid(input.UserID); !ok {
+		http.Error(w, "user id invalid", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.TweetID); !ok {
 		http.Error(w, "tweet id invalid", http.StatusBadRequest)
 		return
 	}
 
-	likeID, err := xid.FromString(input.ID)
-	if err != nil {
+	if ok := uuid.IsValid(input.ID); !ok {
 		http.Error(w, "like id invalid", http.StatusBadRequest)
 		return
 	}
 
 	like := tweetmodel.Like{
-		Id:      likeID.String(),
-		TweetID: tweetID.String(),
+		Id:      input.ID,
+		TweetID: input.TweetID,
 		UserID:  input.UserID,
 	}
 
-	err = t.store.Dislike(like)
+	err := t.store.Dislike(like)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to remove like from tweet ID: %s", like.Id), http.StatusInternalServerError)
 		return

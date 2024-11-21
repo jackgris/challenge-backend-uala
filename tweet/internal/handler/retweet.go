@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
-	"github.com/rs/xid"
+	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
 func (t TweetHandler) reTweet(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +21,16 @@ func (t TweetHandler) reTweet(w http.ResponseWriter, r *http.Request) {
 
 	if input.TweetID == "" || input.UserID == "" {
 		http.Error(w, "tweet_id and user_id are required", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.UserID); !ok {
+		http.Error(w, "user id invalid", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.TweetID); !ok {
+		http.Error(w, "tweet id invalid", http.StatusBadRequest)
 		return
 	}
 
@@ -57,25 +67,28 @@ func (t TweetHandler) deleteReTweet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tweetID, err := xid.FromString(input.TweetID)
-	if err != nil {
-		http.Error(w, "tweet id invalid", http.StatusBadRequest)
-		return
-	}
-
-	retweetID, err := xid.FromString(input.ID)
-	if err != nil {
+	if ok := uuid.IsValid(input.ID); !ok {
 		http.Error(w, "retweet id invalid", http.StatusBadRequest)
 		return
 	}
 
+	if ok := uuid.IsValid(input.UserID); !ok {
+		http.Error(w, "user id invalid", http.StatusBadRequest)
+		return
+	}
+
+	if ok := uuid.IsValid(input.TweetID); !ok {
+		http.Error(w, "tweet id invalid", http.StatusBadRequest)
+		return
+	}
+
 	retweet := tweetmodel.Retweet{
-		Id:      retweetID.String(),
-		TweetID: tweetID.String(),
+		Id:      input.ID,
+		TweetID: input.TweetID,
 		UserID:  input.UserID,
 	}
 
-	err = t.store.DeleteReTweet(retweet)
+	err := t.store.DeleteReTweet(retweet)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to remove retweet from tweet ID: %s", retweet.TweetID), http.StatusInternalServerError)
 		return
