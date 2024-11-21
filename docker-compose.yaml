@@ -72,6 +72,8 @@ services:
       - 8081:8081
     image: dev-auth
     container_name: auth_tweet_dev
+    environment:
+      - PORT=8081
     tty: true
     restart: unless-stopped
     networks:
@@ -83,6 +85,8 @@ services:
       - 8082:8082
     image: dev-timeline
     container_name: timeline_tweet_dev
+    environment:
+      - PORT=8082
     tty: true
     restart: unless-stopped
     networks:
@@ -100,6 +104,7 @@ services:
     container_name: tweets_tweet_dev
     environment:
       - DATABASE_URL=postgresql://pg:pass@database:5432/twitter?sslmode=disable
+      - PORT=8083
     tty: true
     restart: unless-stopped
     networks:
