@@ -52,7 +52,7 @@ func (t TweetHandler) createTweet(w http.ResponseWriter, r *http.Request) {
 
 func (t TweetHandler) getTweetById(w http.ResponseWriter, r *http.Request) {
 
-	tweetID := r.URL.Query().Get("id")
+	tweetID := r.PathValue("id")
 	if tweetID == "" {
 		http.Error(w, "id query parameter is required", http.StatusBadRequest)
 		return
@@ -80,8 +80,7 @@ func (t TweetHandler) getTweetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t TweetHandler) deleteTweet(w http.ResponseWriter, r *http.Request) {
-
-	tweetID := r.URL.Query().Get("id")
+	tweetID := r.PathValue("id")
 	if tweetID == "" {
 		http.Error(w, "id query parameter is required", http.StatusBadRequest)
 		return

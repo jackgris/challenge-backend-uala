@@ -21,13 +21,13 @@ func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /helthz", middleware.LogResponse(healthCheckHandler, t.logs))
-	mux.HandleFunc("GET /id", middleware.LogResponse(t.getTweetById, t.logs))
+	mux.HandleFunc("GET /id/{id}", middleware.LogResponse(t.getTweetById, t.logs))
 	mux.HandleFunc("POST /create", middleware.LogResponse(t.createTweet, t.logs))
-	mux.HandleFunc("DELETE /id/{id}/delete", middleware.LogResponse(t.deleteTweet, t.logs))
-	mux.HandleFunc("POST /id/{id}/like", middleware.LogResponse(t.likeTweet, t.logs))
-	mux.HandleFunc("DELETE /id/{id}/dislike", middleware.LogResponse(t.dislikeTweet, t.logs))
-	mux.HandleFunc("POST /id/{id}/retweet", middleware.LogResponse(t.reTweet, t.logs))
-	mux.HandleFunc("DELETE /id/{id}/retweet", middleware.LogResponse(t.deleteReTweet, t.logs))
+	mux.HandleFunc("DELETE /delete/{id}", middleware.LogResponse(t.deleteTweet, t.logs))
+	mux.HandleFunc("POST /like", middleware.LogResponse(t.likeTweet, t.logs))
+	mux.HandleFunc("DELETE /like", middleware.LogResponse(t.dislikeTweet, t.logs))
+	mux.HandleFunc("POST /retweet", middleware.LogResponse(t.reTweet, t.logs))
+	mux.HandleFunc("DELETE /retweet", middleware.LogResponse(t.deleteReTweet, t.logs))
 
 	return mux
 }

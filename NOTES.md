@@ -55,38 +55,38 @@ curl -X POST http://localhost:8080/tweet/create \
 
 #### Get Tweet by ID
 ```bash
-curl -X GET 'http://localhost:8080/tweet/id?id=csuitap82pqc73cn5ar0'
+curl -X GET 'http://localhost:8080/tweet/id/csuitap82pqc73cn5ar0'
 ```
 
 #### Delete Tweet
 ```bash
-curl -X DELETE 'http://localhost:8080/tweet/id/csuitap82pqc73cn5ar0/delete?id=csuitap82pqc73cn5ar0'
+curl -X DELETE 'http://localhost:8080/tweet/delete/csuitap82pqc73cn5ar0'
 ```
 
 #### Like
 ```bash
-curl -X POST 'http://localhost:8080/tweet/id/csuitap82pqc73cn5ar0/like' \
+curl -X POST 'http://localhost:8080/tweet/like' \
 -H "Content-Type: application/json" \
--d '{"tweet_id": "csuitap82pqc73cn5ar0", "user_id": "1234"}'
+-d '{"tweet_id": "csvqhqmek44s73e2qf7g", "user_id": "1234"}'
 ```
 
 #### Dislike
 ```bash
-curl -X DELETE 'http://localhost:8080/tweet/id/csv5n43qnq3s73akufng/dislike' \
+curl -X DELETE 'http://localhost:8080/tweet/like' \
 -H "Content-Type: application/json" \
--d '{"id":"csv5njrqnq3s73akufo0", "tweet_id": "csv5n43qnq3s73akufng", "user_id": "1234"}'
+-d '{"id":"csvqj46ek44s73e2qf80","tweet_id": "csvqhqmek44s73e2qf7g", "user_id": "1234"}'
 ```
 
 #### Retweet
 ```bash
-curl -X POST 'http://localhost:8080/tweet/id/csv5jjrqnq3s73akufl0/retweet' \
+curl -X POST 'http://localhost:8080/tweet/retweet' \
 -H "Content-Type: application/json" \
 -d '{"tweet_id":"csv5jjrqnq3s73akufl0",  "user_id": "1234"}'
 ```
 
 #### Remove retweet
 ```bash
-curl -X DELETE 'http://localhost:8080/tweet/id/csv5jjrqnq3s73akufl0/retweet' \
+curl -X DELETE 'http://localhost:8080/retweet/csv5jjrqnq3s73akufl0' \
 -H "Content-Type: application/json" \
 -d '{"id":"csv5ks3qnq3s73akuflg","tweet_id":"csv5jjrqnq3s73akufl0",  "user_id": "1234"}'
 ```
