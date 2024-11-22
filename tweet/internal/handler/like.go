@@ -9,7 +9,7 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
-func (t TweetHandler) likeTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) LikeTweet(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		TweetID string `json:"tweet_id"`
 		UserID  string `json:"user_id"`
@@ -50,7 +50,7 @@ func (t TweetHandler) likeTweet(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(LikeToJSON(like))
 }
 
-func (t TweetHandler) dislikeTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) DislikeTweet(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
 		ID      string `json:"id"`

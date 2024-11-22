@@ -13,7 +13,7 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
-func (t TweetHandler) createTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) CreateTweet(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
 		UserID  string `json:"user_id"`
@@ -55,7 +55,7 @@ func (t TweetHandler) createTweet(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (t TweetHandler) getTweetById(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) GetTweetById(w http.ResponseWriter, r *http.Request) {
 
 	tweetID := r.PathValue("id")
 	if tweetID == "" {
@@ -83,7 +83,7 @@ func (t TweetHandler) getTweetById(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(TweetToJSON(tweet))
 }
 
-func (t TweetHandler) deleteTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) DeleteTweet(w http.ResponseWriter, r *http.Request) {
 	tweetID := r.PathValue("id")
 	if tweetID == "" {
 		http.Error(w, "id query parameter is required", http.StatusBadRequest)

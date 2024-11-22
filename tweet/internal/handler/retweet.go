@@ -9,7 +9,7 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 )
 
-func (t TweetHandler) reTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) ReTweet(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		TweetID string `json:"tweet_id"`
 		UserID  string `json:"user_id"`
@@ -50,7 +50,7 @@ func (t TweetHandler) reTweet(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(RetweetToJSON(retweet))
 }
 
-func (t TweetHandler) deleteReTweet(w http.ResponseWriter, r *http.Request) {
+func (t TweetHandler) DeleteReTweet(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
 		ID      string `json:"id"`
