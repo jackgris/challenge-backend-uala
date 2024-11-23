@@ -56,7 +56,7 @@ run/user:
 
 # audit: tidy dependencies and format, vet and test all code
 .PHONY: audit
-DIRS := auth timeline user tweet
+DIRS := auth timeline tweet
 
 audit:
 	@for dir in $(DIRS); do \

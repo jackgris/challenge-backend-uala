@@ -9,6 +9,7 @@ https://encore.dev/blog/go-1.18-generic-identifiers
 
 
 ### I should add this tools:
+OAuth: [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy)
 CI/CD: Github Actions
 Gherkin: for E2E test
 API documentation: OpenAPI - Swagger
