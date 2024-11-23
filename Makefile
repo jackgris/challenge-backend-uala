@@ -30,6 +30,11 @@ build/docker:
 build/docker/recreate:
 	docker compose up --build --remove-orphans --force-recreate
 
+## run/migration: run the database migration
+.PHONY: run/migration
+run/migration:
+	@source ./.env && migrate -database $(DATABASE_URL) -path ./migrations up
+
 ## run/auth: run the auth API
 .PHONY: run/auth
 run/auth:
