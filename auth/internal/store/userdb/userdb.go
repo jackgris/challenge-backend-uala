@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackgris/twitter-backend/auth/internal/domain/usermodel"
@@ -88,29 +90,29 @@ func (s *Store) Follow(follow usermodel.UserFollowers) error {
 	defer cancel()
 
 	query := `
-                INSERT INTO user_followers (id, user_id, username) VALUES ($1, $2, $3)
+                INSERT INTO user_followers (id, user_id, follower_id) VALUES ($1, $2, $3)
         `
 	_, err := s.db.Exec(ctx, query,
 		uuid.New(),
 		follow.UserID,
-		follow.UserName,
+		follow.FollowerID,
 	)
 	if err != nil {
 		return err
 	}
 
 	query = `
-               UPDATE users SET follower_count = follower_count + 1 WHERE username = $1
+               UPDATE users SET follower_count = follower_count + 1 WHERE id = $1
         `
-	_, err = s.db.Exec(ctx, query, follow.UserName)
+	_, err = s.db.Exec(ctx, query, follow.FollowerID)
 	if err != nil {
 		return err
 	}
 
 	query = `
-               UPDATE users SET following_count = following_count + 1 WHERE username = $1
+               UPDATE users SET following_count = following_count + 1 WHERE id = $1
         `
-	_, err = s.db.Exec(ctx, query, follow.UserID)
+	_, err = s.db.Exec(ctx, query, follow.FollowerID)
 	if err != nil {
 		return err
 	}
@@ -123,28 +125,28 @@ func (s *Store) Unfollow(follow usermodel.UserFollowers) error {
 	defer cancel()
 
 	query := `
-                DELETE FROM user_followers WHERE user_id = $1 AND username = $2
+                DELETE FROM user_followers WHERE user_id = $1 AND follower_id = $2
         `
 	_, err := s.db.Exec(ctx, query,
 		follow.UserID,
-		follow.UserName,
+		follow.FollowerID,
 	)
 	if err != nil {
 		return err
 	}
 
 	query = `
-               UPDATE users SET follower_count = follower_count - 1 WHERE username = $1
+               UPDATE users SET follower_count = follower_count - 1 WHERE id = $1
         `
-	_, err = s.db.Exec(ctx, query, follow.UserName)
+	_, err = s.db.Exec(ctx, query, follow.UserID)
 	if err != nil {
 		return err
 	}
 
 	query = `
-               UPDATE users SET following_count = following_count - 1 WHERE username = $1
+               UPDATE users SET following_count = following_count - 1 WHERE id = $1
         `
-	_, err = s.db.Exec(ctx, query, follow.UserID)
+	_, err = s.db.Exec(ctx, query, follow.FollowerID)
 	if err != nil {
 		return err
 	}
@@ -152,7 +154,7 @@ func (s *Store) Unfollow(follow usermodel.UserFollowers) error {
 	return nil
 }
 
-func (s *Store) GetUserbyUsername(username string) (*usermodel.User, error) {
+func (s *Store) GetUserbyUsername(username string) (usermodel.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 	defer cancel()
 
@@ -172,15 +174,15 @@ func (s *Store) GetUserbyUsername(username string) (*usermodel.User, error) {
 		&user.EncodedDate)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return usermodel.User{}, nil
 		}
-		return nil, err
+		return usermodel.User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func (s *Store) GetUserbyID(id string) (*usermodel.User, error) {
+func (s *Store) GetUserbyID(id string) (usermodel.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 	defer cancel()
 
@@ -201,36 +203,73 @@ func (s *Store) GetUserbyID(id string) (*usermodel.User, error) {
 		&user.EncodedDate)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return usermodel.User{}, nil
 		}
-		return nil, err
+		return usermodel.User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (s *Store) Update(user usermodel.User) (usermodel.User, error) {
+	var queryBuilder strings.Builder
+	var args []interface{}
+	queryBuilder.WriteString("UPDATE users SET ")
+
+	if user.UserName != "" {
+		queryBuilder.WriteString("username = $1, ")
+		args = append(args, user.UserName)
+	}
+	if user.Email != "" {
+		queryBuilder.WriteString("email = $2, ")
+		args = append(args, user.Email)
+	}
+	if user.Password != "" {
+		queryBuilder.WriteString("password = $3, ")
+		args = append(args, user.Password)
+	}
+	if user.FollowerCount != 0 {
+		queryBuilder.WriteString("follower_count = $4, ")
+		args = append(args, user.FollowerCount)
+	}
+	if user.FollowingCount != 0 {
+		queryBuilder.WriteString("following_count = $5, ")
+		args = append(args, user.FollowingCount)
+	}
+	if user.Salt != "" {
+		queryBuilder.WriteString("salt = $6, ")
+		args = append(args, user.Salt)
+	}
+	if user.Token != "" {
+		queryBuilder.WriteString("token = $7, ")
+		args = append(args, user.Token)
+	}
+	if !user.DateCreated.IsZero() {
+		queryBuilder.WriteString("date_created = $8, ")
+		args = append(args, user.DateCreated)
+	}
+	if user.EncodedDate != "" {
+		queryBuilder.WriteString("encoded_date = $9, ")
+		args = append(args, user.EncodedDate)
+	}
+
+	query := queryBuilder.String()[:len(queryBuilder.String())-2]
+
+	// TODO
+	queryBuilder.WriteString(query)
+	queryBuilder.WriteString(" WHERE id = $")
+	args = append(args, len(args)+1)
+	queryBuilder.WriteString(strconv.Itoa(len(args)))
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 	defer cancel()
 
-	query := `
-                UPDATE users
-                SET username = $1, email = $2, password = $3, follower_count = $4,
-                    following_count = $5, salt = $6, token = $7, date_created = $8,
-                    encoded_date = $9 WHERE id = $10
-        `
-	_, err := s.db.Exec(ctx, query,
-		user.UserName,
-		user.Email,
-		user.Password,
-		user.FollowerCount,
-		user.FollowingCount,
-		user.Salt,
-		user.Token,
-		user.DateCreated,
-		user.EncodedDate,
-		user.ID,
-	)
+	_, err := s.db.Exec(ctx, queryBuilder.String(), args...)
+	if err != nil {
+		return usermodel.User{}, err
+	}
+
+	user, err = s.GetUserbyID(user.ID)
 	if err != nil {
 		return usermodel.User{}, err
 	}

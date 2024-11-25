@@ -1,9 +1,13 @@
 package validator
 
-import "regexp"
+import (
+	"regexp"
+	"unicode/utf8"
+)
 
 var (
 	EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	NameRX  = regexp.MustCompile(`^[a-zA-Z\s'-]+$`)
 )
 
 type Validator struct {
@@ -56,4 +60,11 @@ func Unique(values []string) bool {
 func ValidateEmail(v *Validator, email string) {
 	v.Check(email != "", "email", "must be provided")
 	v.Check(Matches(email, EmailRX), "email", "must be a valid email address")
+}
+
+func ValidateName(v *Validator, name string) {
+	v.Check(name != "", "name", "must be provided")
+	v.Check(utf8.RuneCountInString(name) < 5, "name", "name must be longer than 5 characters")
+	v.Check(utf8.RuneCountInString(name) > 200, "name", "name must be shorter")
+	v.Check(Matches(name, NameRX), "name", "must be a valid name")
 }

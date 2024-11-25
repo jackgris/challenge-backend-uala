@@ -32,9 +32,9 @@ func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
 	mux.HandleFunc("GET /id/{id}", middleware.LogResponse(u.GetUserbyID, u.logs))
 	mux.HandleFunc("GET /name/{name}", middleware.LogResponse(u.GetUserbyUsername, u.logs))
 	mux.HandleFunc("DELETE /delete/{id}", middleware.LogResponse(u.Delete, u.logs))
-	mux.HandleFunc("POST /like", middleware.LogResponse(u.Follow, u.logs))
-	mux.HandleFunc("DELETE /like", middleware.LogResponse(u.Unfollow, u.logs))
-	mux.HandleFunc("PUT /retweet", middleware.LogResponse(u.Update, u.logs))
+	mux.HandleFunc("POST /follow", middleware.LogResponse(u.Follow, u.logs))
+	mux.HandleFunc("DELETE /unfollow", middleware.LogResponse(u.Unfollow, u.logs))
+	mux.HandleFunc("PATCH /update", middleware.LogResponse(u.Update, u.logs))
 
 	return mux
 }
@@ -45,8 +45,8 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 type Store interface {
 	Create(user usermodel.User) (usermodel.User, error)
-	GetUserbyID(id string) (*usermodel.User, error)
-	GetUserbyUsername(username string) (*usermodel.User, error)
+	GetUserbyID(id string) (usermodel.User, error)
+	GetUserbyUsername(username string) (usermodel.User, error)
 	Delete(id string) error
 	Follow(follow usermodel.UserFollowers) error
 	Unfollow(follow usermodel.UserFollowers) error

@@ -22,9 +22,9 @@ type User struct {
 }
 
 type UserFollowers struct {
-	ID       string
-	UserID   string
-	UserName string
+	ID         string
+	UserID     string
+	FollowerID string
 }
 
 func UserToModel(user User) usermodel.User {
@@ -48,9 +48,9 @@ func FollowersToModel(followers []UserFollowers) []usermodel.UserFollowers {
 	var convertedFollowers []usermodel.UserFollowers
 	for _, follower := range followers {
 		convertedFollowers = append(convertedFollowers, usermodel.UserFollowers{
-			ID:       follower.ID,
-			UserID:   follower.UserID,
-			UserName: follower.UserName,
+			ID:         follower.ID,
+			UserID:     follower.UserID,
+			FollowerID: follower.FollowerID,
 		})
 	}
 	return convertedFollowers

@@ -22,9 +22,9 @@ type User struct {
 }
 
 type UserFollowers struct {
-	ID       string `json:"id"`
-	UserID   string `json:"user_id"`
-	UserName string `json:"username"`
+	ID         string `json:"id"`
+	UserID     string `json:"user_id"`
+	FollowerID string `json:"follower_id"`
 }
 
 func UserToJSON(user usermodel.User) User {
@@ -39,19 +39,27 @@ func UserToJSON(user usermodel.User) User {
 		Token:          user.Token,
 		DateCreated:    user.DateCreated,
 		EncodedDate:    user.EncodedDate,
-		Followers:      FollowersToJSON(user.Followers),
-		Following:      FollowersToJSON(user.Following),
+		Followers:      followersToJSON(user.Followers),
+		Following:      followersToJSON(user.Following),
 	}
 }
 
-func FollowersToJSON(followers []usermodel.UserFollowers) []UserFollowers {
+func followersToJSON(followers []usermodel.UserFollowers) []UserFollowers {
 	var convertedFollowers []UserFollowers
 	for _, follower := range followers {
 		convertedFollowers = append(convertedFollowers, UserFollowers{
-			ID:       follower.ID,
-			UserID:   follower.UserID,
-			UserName: follower.UserName,
+			ID:         follower.ID,
+			UserID:     follower.UserID,
+			FollowerID: follower.FollowerID,
 		})
 	}
 	return convertedFollowers
+}
+
+func FollowerToJSON(follower usermodel.UserFollowers) UserFollowers {
+	return UserFollowers{
+		ID:         follower.ID,
+		UserID:     follower.UserID,
+		FollowerID: follower.FollowerID,
+	}
 }

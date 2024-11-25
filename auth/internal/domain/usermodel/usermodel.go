@@ -20,7 +20,7 @@ type User struct {
 }
 
 type UserFollowers struct {
-	ID       string
-	UserID   string
-	UserName string
+	ID         string
+	UserID     string
+	FollowerID string
 }
