@@ -187,9 +187,27 @@ func (s *Store) GetUserbyID(id string) (usermodel.User, error) {
 	defer cancel()
 
 	query := `
-                SELECT * FROM users WHERE id = $1
+                SELECT
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.password,
+                    u.follower_count,
+                    u.following_count,
+                    u.salt,
+                    u.token,
+                    u.date_created,
+                    u.encoded_date,
+                    COALESCE(array_agg(COALESCE(uf.follower_id, '')), '{}') AS followers
+                FROM users u
+                LEFT JOIN user_followers uf
+                ON u.id = uf.user_id
+                WHERE u.id = $1
+                GROUP BY u.id
         `
+
 	var user usermodel.User
+	followers := []string{}
 	err := s.db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.UserName,
@@ -200,12 +218,20 @@ func (s *Store) GetUserbyID(id string) (usermodel.User, error) {
 		&user.Salt,
 		&user.Token,
 		&user.DateCreated,
-		&user.EncodedDate)
+		&user.EncodedDate,
+		&followers)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return usermodel.User{}, nil
 		}
 		return usermodel.User{}, err
+	}
+	for _, f := range followers {
+		userf := usermodel.UserFollowers{
+			UserID:     user.ID,
+			FollowerID: f,
+		}
+		user.Followers = append(user.Followers, userf)
 	}
 
 	return user, nil
