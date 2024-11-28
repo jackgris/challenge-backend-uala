@@ -69,28 +69,28 @@ func NewTweet(tweetID, userID, content string) *message.Message {
 }
 
 func (t TweetHandler) SendTweetToFollowersEvent() {
-
 	ctx := context.Background()
-	messages, err := t.msgBroker.SubscribeGetFollowers("followers")
+	messages, err := t.msgBroker.SubscribeEvents("followers")
 	if err != nil {
 		t.logs.Error(ctx, "tweet service", "reading paylod followers", err)
 		return
 	}
 
 	for msg := range messages {
+		msg.Ack()
 		followers := FollowersEvent{}
 		err := json.Unmarshal(msg.Payload, &followers)
 		if err != nil {
 			t.logs.Error(ctx, "tweet service", "reading paylod followers", err)
-			msg.Ack()
 			continue
 		}
 
-		t.logs.Info(ctx, "tweet service", "publish message", "status", "followers", followers)
-
+		t.logs.Info(ctx, "tweet service", "publish message", "topic", "followers", followers, "msg ID", msg.UUID)
 		for _, follower := range followers.FollowersID {
-			tweet := NewTweet(followers.TweetID, follower, followers.Content)
-			t.msgBroker.PublishMessages("tweet-"+follower, tweet)
+			if follower != "" {
+				tweet := NewTweet(followers.TweetID, follower, followers.Content)
+				t.msgBroker.PublishMessages("tweet-"+follower, tweet)
+			}
 		}
 	}
 }
