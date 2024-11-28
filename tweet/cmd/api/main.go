@@ -15,30 +15,38 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/internal/store/tweetdb"
 	"github.com/jackgris/twitter-backend/tweet/pkg/database"
 	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/pkg/msgbroker"
 )
 
 func main() {
 	ctx := context.Background()
 	log := logger.New(os.Stdout)
+	serviceName := "tweet service"
 
-	err := run(ctx, log)
+	err := run(ctx, serviceName, log)
 	if err != nil {
-		log.Error(ctx, fmt.Sprintf("Error server shutdown: %s\n", err))
+		log.Error(ctx, serviceName, fmt.Sprintf("Error server shutdown: %s\n", err))
 	}
 }
 
-func run(ctx context.Context, log *logger.Logger) error {
+func run(ctx context.Context, serviceName string, log *logger.Logger) error {
 
 	db := database.ConnectDB(ctx, log)
 	defer db.Close(ctx)
 
 	store := tweetdb.NewStore(db)
-	mux := handler.NewHandler(store, log)
+	msgBrokerPath := os.Getenv("NATS_URL")
+	if msgBrokerPath == "" {
+		log.Error(ctx, serviceName, "Environment variable NATS_URL is empty")
+		os.Exit(1)
+	}
+	msgbroker := msgbroker.NewMsgBroker(serviceName, msgBrokerPath, log)
+	mux, t := handler.NewHandler(store, msgbroker, log)
 
 	portEnv := os.Getenv("PORT")
 	port, err := strconv.Atoi(portEnv)
 	if err != nil {
-		log.Error(ctx, "Environment variable PORT converting to integer")
+		log.Error(ctx, serviceName, "Environment variable PORT converting to integer", err)
 		os.Exit(1)
 	}
 
@@ -52,9 +60,13 @@ func run(ctx context.Context, log *logger.Logger) error {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Info(ctx, "startup", "GOMAXPROCS", runtime.GOMAXPROCS(0), "Server started at port", port)
+		log.Info(ctx, serviceName+" startup", "GOMAXPROCS", runtime.GOMAXPROCS(0), "Server started at port", port)
 
 		serverErrors <- srv.ListenAndServe()
+	}()
+
+	go func() {
+		t.SendTweetToFollowersEvent()
 	}()
 
 	// -------------------------------------------------------------------------
@@ -62,16 +74,20 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	select {
 	case err := <-serverErrors:
+		log.Error(ctx, serviceName, "status", "server error", err)
 		return fmt.Errorf("server error: %w", err)
 
 	case sig := <-shutdown:
-		log.Info(ctx, "shutdown", "status", "shutdown started", "signal", sig)
-		defer log.Info(ctx, "shutdown", "status", "shutdown complete", "signal", sig)
+		log.Info(ctx, serviceName+" shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Info(ctx, serviceName+" shutdown", "status", "shutdown complete", "signal", sig)
+
+		msgbroker.Close()
 
 		ctx, cancel := context.WithTimeout(ctx, time.Microsecond*500)
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
+			log.Error(ctx, serviceName+" shutdown", "status", "could not stop server gracefully", err)
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}
 	}

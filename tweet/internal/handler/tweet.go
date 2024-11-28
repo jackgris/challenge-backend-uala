@@ -49,6 +49,11 @@ func (t TweetHandler) CreateTweet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go func() {
+		msg := NewTweetCreated(tweet.UserID, tweet.Id, tweet.Content)
+		t.msgBroker.PublishMessages("tweets", msg)
+	}()
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(TweetToJSON(tweet))

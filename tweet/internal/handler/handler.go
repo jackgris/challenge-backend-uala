@@ -6,24 +6,28 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
 	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
 	"github.com/jackgris/twitter-backend/tweet/pkg/middleware"
+	"github.com/jackgris/twitter-backend/tweet/pkg/msgbroker"
 )
 
 type TweetHandler struct {
-	logs  *logger.Logger
-	store Store
+	logs      *logger.Logger
+	store     Store
+	msgBroker *msgbroker.MsgBroker
 }
 
-func NewTweetHandler(store Store, logs *logger.Logger) TweetHandler {
+func NewTweetHandler(store Store, msgBroker *msgbroker.MsgBroker, logs *logger.Logger) TweetHandler {
 	return TweetHandler{
-		store: store,
-		logs:  logs,
+		store:     store,
+		msgBroker: msgBroker,
+		logs:      logs,
 	}
 }
 
-func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
+func NewHandler(store Store, msgBroker *msgbroker.MsgBroker, logs *logger.Logger) (*http.ServeMux, *TweetHandler) {
 	t := TweetHandler{
-		store: store,
-		logs:  logs,
+		store:     store,
+		msgBroker: msgBroker,
+		logs:      logs,
 	}
 
 	mux := http.NewServeMux()
@@ -36,7 +40,7 @@ func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
 	mux.HandleFunc("POST /retweet", middleware.LogResponse(t.ReTweet, t.logs))
 	mux.HandleFunc("DELETE /retweet", middleware.LogResponse(t.DeleteReTweet, t.logs))
 
-	return mux
+	return mux, &t
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {

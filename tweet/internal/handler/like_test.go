@@ -12,6 +12,7 @@ import (
 	"github.com/jackgris/twitter-backend/tweet/internal/domain/tweetmodel"
 	"github.com/jackgris/twitter-backend/tweet/internal/handler"
 	"github.com/jackgris/twitter-backend/tweet/pkg/logger"
+	"github.com/jackgris/twitter-backend/tweet/pkg/msgbroker"
 	"github.com/jackgris/twitter-backend/tweet/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -84,7 +85,8 @@ func TestLikeTweet(t *testing.T) {
 			}
 
 			log := logger.New(io.Discard)
-			handler := handler.NewTweetHandler(mockStore, log)
+			msgbroker := msgbroker.NewMockMsgBroker(log)
+			handler := handler.NewTweetHandler(mockStore, msgbroker, log)
 
 			body, _ := json.Marshal(test.requestBody)
 			req := httptest.NewRequest(http.MethodPost, "/like", bytes.NewReader(body))
