@@ -79,6 +79,9 @@ services:
       database:
         condition: service_healthy
         restart: true
+      nats:
+        condition: service_healthy
+        restart: true
     image: dev-auth
     container_name: auth_tweet_dev
     environment:
@@ -94,9 +97,18 @@ services:
     build: ./timeline
     ports:
       - 8082:8082
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+      nats:
+        condition: service_healthy
+        restart: true
     image: dev-timeline
     container_name: timeline_tweet_dev
     environment:
+      - DATABASE_URL=postgresql://pg:pass@database:5432/twitter?sslmode=disable
+      - NATS_URL=nats://nats:4222
       - PORT=8082
     tty: true
     restart: unless-stopped
