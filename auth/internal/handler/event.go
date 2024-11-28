@@ -35,29 +35,30 @@ func NewFollowers(tweetID, content string, followers []string) *message.Message 
 	return message.NewMessage(event.Header.ID, tweetMsg)
 }
 
-func (u *UserHandler) SubscribeGetFollowers(ctx context.Context, topic string) {
-
-	messages, err := u.msgBroker.SubscribeGetFollowers("topic")
+func (u *UserHandler) SubscribeGetFollowers() {
+	ctx := context.Background()
+	topic := "tweets"
+	messages, err := u.msgBroker.SubscribeEvents(topic)
 	if err != nil {
 		u.logs.Error(ctx, "auth service", "subscriber: can't subscribe "+topic, err)
 	}
 
 	for msg := range messages {
-
+		msg.Ack()
 		tweet := Tweet{}
 		err := json.Unmarshal(msg.Payload, &tweet)
 		if err != nil {
-			u.logs.Error(ctx, "auth service", "reading paylod "+topic, err)
-			msg.Ack()
+			u.logs.Error(ctx, "auth service", "reading paylod "+topic, err, "msg", msg)
 			continue
 		}
+
+		u.logs.Info(ctx, "auth service", "receive tweets ", tweet, "ID", msg.UUID)
 
 		user, err := u.store.GetUserbyID(tweet.UserID)
 		if err != nil {
 			if err != pgx.ErrNoRows {
 				u.logs.Error(ctx, "auth service", "getting followers "+topic, err)
 			}
-			msg.Ack()
 			continue
 		}
 
@@ -70,6 +71,8 @@ func (u *UserHandler) SubscribeGetFollowers(ctx context.Context, topic string) {
 
 		u.msgBroker.PublishMessages("followers", followers)
 
-		msg.Ack()
+		newFollow := Followers{}
+		_ = json.Unmarshal(followers.Payload, &newFollow)
+		u.logs.Info(ctx, "auth service", "send followers ", newFollow)
 	}
 }

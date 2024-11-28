@@ -67,7 +67,7 @@ func run(ctx context.Context, serviceName string, log *logger.Logger) error {
 	}()
 
 	go func() {
-		u.SubscribeGetFollowers(ctx, "tweets")
+		u.SubscribeGetFollowers()
 	}()
 
 	// -------------------------------------------------------------------------
