@@ -28,20 +28,25 @@ services:
   #   networks:
   #     - dev
 
-  # nats:
-  #   image: nats:2.10-alpine
-  #   container_name: nats_tweet_dev
-  #   restart: always
-  #   command: -c /etc/nats/nats.conf
-  #   ports:
-  #     - "4222:4222" # client port
-  #     - "6222:6222" # cluster port
-  #     - "8222:8222" # monitoring port
-  #   volumes:
-  #     - ./nats.conf:/etc/nats/nats.conf
-  #     - $JETSTREAM_STORAGE:/data
-  #   networks:
-  #     - dev
+  nats:
+    image: nats:2.10-alpine
+    container_name: nats_tweet_dev
+    restart: always
+    command: -c /etc/nats/nats.conf
+    ports:
+      - "4222:4222" # client port
+      - "6222:6222" # cluster port
+      - "8222:8222" # monitoring port
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 4222"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf
+      - $JETSTREAM_STORAGE:/data
+    networks:
+      - dev
 
   database:
     container_name: postgresql_tweet_dev
@@ -70,9 +75,15 @@ services:
     build: ./auth
     ports:
       - 8081:8081
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
     image: dev-auth
     container_name: auth_tweet_dev
     environment:
+      - DATABASE_URL=postgresql://pg:pass@database:5432/twitter?sslmode=disable
+      - NATS_URL=nats://nats:4222
       - PORT=8081
     tty: true
     restart: unless-stopped
@@ -100,10 +111,14 @@ services:
       database:
         condition: service_healthy
         restart: true
+      nats:
+        condition: service_healthy
+        restart: true
     image: dev-tweet
     container_name: tweets_tweet_dev
     environment:
       - DATABASE_URL=postgresql://pg:pass@database:5432/twitter?sslmode=disable
+      - NATS_URL=nats://nats:4222
       - PORT=8083
     tty: true
     restart: unless-stopped
