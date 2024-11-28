@@ -88,37 +88,20 @@ func NewMsgBroker(service, natsURL string, logs *logger.Logger) *MsgBroker {
 }
 
 func (m *MsgBroker) PublishMessages(topic string, msg *message.Message) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
-	defer cancel()
-loop:
-	for {
-		select {
-		case <-ctx.Done():
-			m.logs.Info(ctx, m.name, "publish message", "status", "conxtext timeout", "message ID", msg.UUID)
-			break loop
-		default:
-			if err := m.pub.Publish(topic, msg); err != nil {
-				m.logs.Info(ctx, m.name, "publish message", "status", err, "topic", topic, "message ID", msg.UUID)
-			} else {
-				break loop
-			}
-		}
-		time.Sleep(time.Millisecond * 50)
+	if err := m.pub.Publish(topic, msg); err != nil {
+		m.logs.Info(context.Background(), m.name, "publish message", "status", err, "topic", topic, "message ID", msg.UUID)
 	}
 }
 
-func (m *MsgBroker) SubscribeGetFollowers(topic string) (<-chan *message.Message, error) {
-
+func (m *MsgBroker) SubscribeEvents(topic string) (<-chan *message.Message, error) {
 	ctx := context.Background()
 	messages, err := m.sub.Subscribe(ctx, topic)
 	if err != nil {
-
 		m.logs.Error(ctx, m.name, "subscriber: can't subscribe to "+topic, "status", err)
 		return nil, err
 	}
 
 	return messages, err
-
 }
 
 func (m *MsgBroker) Close() {
