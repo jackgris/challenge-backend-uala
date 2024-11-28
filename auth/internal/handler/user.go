@@ -23,7 +23,7 @@ func (u UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.UserName == "" || input.Password == "" {
+	if input.Password == "" {
 		http.Error(w, "user_name and password are required", http.StatusBadRequest)
 		return
 	}
