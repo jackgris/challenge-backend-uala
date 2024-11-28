@@ -35,7 +35,7 @@ func (s *Store) Create(user usermodel.User) (usermodel.User, error) {
         `
 	var newUser usermodel.User
 	err := s.db.QueryRow(ctx, query,
-		user.ID,
+		uuid.New(),
 		user.UserName,
 		user.Email,
 		user.Password,
