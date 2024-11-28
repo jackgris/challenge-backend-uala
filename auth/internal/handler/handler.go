@@ -6,24 +6,28 @@ import (
 	"github.com/jackgris/twitter-backend/auth/internal/domain/usermodel"
 	"github.com/jackgris/twitter-backend/auth/pkg/logger"
 	"github.com/jackgris/twitter-backend/auth/pkg/middleware"
+	"github.com/jackgris/twitter-backend/auth/pkg/msgbroker"
 )
 
 type UserHandler struct {
-	logs  *logger.Logger
-	store Store
+	logs      *logger.Logger
+	store     Store
+	msgBroker *msgbroker.MsgBroker
 }
 
-func NewTweetHandler(store Store, logs *logger.Logger) UserHandler {
+func NewTweetHandler(store Store, msgBroker *msgbroker.MsgBroker, logs *logger.Logger) UserHandler {
 	return UserHandler{
-		store: store,
-		logs:  logs,
+		store:     store,
+		logs:      logs,
+		msgBroker: msgBroker,
 	}
 }
 
-func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
+func NewHandler(store Store, msgBroker *msgbroker.MsgBroker, logs *logger.Logger) (*http.ServeMux, *UserHandler) {
 	u := UserHandler{
-		store: store,
-		logs:  logs,
+		store:     store,
+		logs:      logs,
+		msgBroker: msgBroker,
 	}
 
 	mux := http.NewServeMux()
@@ -36,7 +40,7 @@ func NewHandler(store Store, logs *logger.Logger) *http.ServeMux {
 	mux.HandleFunc("DELETE /unfollow", middleware.LogResponse(u.Unfollow, u.logs))
 	mux.HandleFunc("PATCH /update", middleware.LogResponse(u.Update, u.logs))
 
-	return mux
+	return mux, &u
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
