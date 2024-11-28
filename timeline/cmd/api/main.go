@@ -22,13 +22,14 @@ func main() {
 	ctx := context.Background()
 	log := logger.New(os.Stdout)
 
-	err := run(ctx, log)
+	serviceName := "timeline service"
+	err := run(ctx, serviceName, log)
 	if err != nil {
-		log.Error(ctx, "timeline service", fmt.Sprintf("Error server shutdown: %s\n", err))
+		log.Error(ctx, serviceName, fmt.Sprintf("Error server shutdown: %s\n", err))
 	}
 }
 
-func run(ctx context.Context, log *logger.Logger) error {
+func run(ctx context.Context, serviceName string, log *logger.Logger) error {
 
 	db := database.ConnectDB(ctx, log)
 	defer db.Close(ctx)
@@ -36,17 +37,17 @@ func run(ctx context.Context, log *logger.Logger) error {
 	store := timelinedb.NewStore(db)
 	msgBrokerPath := os.Getenv("NATS_URL")
 	if msgBrokerPath == "" {
-		log.Error(ctx, "timeline service", "Environment variable NATS_URL is empty")
+		log.Error(ctx, serviceName, "Environment variable NATS_URL is empty")
 		os.Exit(1)
 	}
 
-	msgbroker := msgbroker.NewMsgBroker(msgBrokerPath, log)
+	msgbroker := msgbroker.NewMsgBroker(serviceName, msgBrokerPath, log)
 	mux := handler.NewHandler(store, msgbroker, log)
 
 	portEnv := os.Getenv("PORT")
 	port, err := strconv.Atoi(portEnv)
 	if err != nil {
-		log.Error(ctx, "timeline service", "Environment variable PORT converting to integer", err)
+		log.Error(ctx, serviceName, "Environment variable PORT converting to integer", err)
 		os.Exit(1)
 	}
 
@@ -60,7 +61,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Info(ctx, "timeline service startup", "GOMAXPROCS", runtime.GOMAXPROCS(0), "Server started at port", port)
+		log.Info(ctx, serviceName+" startup", "GOMAXPROCS", runtime.GOMAXPROCS(0), "Server started at port", port)
 
 		serverErrors <- srv.ListenAndServe()
 	}()
@@ -70,18 +71,18 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	select {
 	case err := <-serverErrors:
-		log.Error(ctx, "timeline service", "status", "server error", err)
+		log.Error(ctx, serviceName, "status", "server error", err)
 		return fmt.Errorf("server error: %w", err)
 
 	case sig := <-shutdown:
-		log.Info(ctx, "timeline service shutdown", "status", "shutdown started", "signal", sig)
-		defer log.Info(ctx, "timeline service shutdown", "status", "shutdown complete", "signal", sig)
+		log.Info(ctx, serviceName+" shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Info(ctx, serviceName+" shutdown", "status", "shutdown complete", "signal", sig)
 
 		ctx, cancel := context.WithTimeout(ctx, time.Microsecond*500)
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Error(ctx, "timeline service shutdown", "status", "could not stop server gracefully", err)
+			log.Error(ctx, serviceName+" shutdown", "status", "could not stop server gracefully", err)
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}
 	}

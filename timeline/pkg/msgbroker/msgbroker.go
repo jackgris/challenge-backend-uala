@@ -13,12 +13,13 @@ import (
 )
 
 type MsgBroker struct {
+	name string
 	sub  message.Subscriber
 	pub  message.Publisher
 	logs *logger.Logger
 }
 
-func NewMsgBroker(path string, logs *logger.Logger) *MsgBroker {
+func NewMsgBroker(service, natsURL string, logs *logger.Logger) *MsgBroker {
 
 	marshaler := &nats.GobMarshaler{}
 	logger := watermill.NewStdLogger(false, false)
@@ -27,59 +28,52 @@ func NewMsgBroker(path string, logs *logger.Logger) *MsgBroker {
 		nc.Timeout(30 * time.Second),
 		nc.ReconnectWait(1 * time.Second),
 	}
-	jsConfig := nats.JetStreamConfig{Disabled: true}
+	subscribeOptions := []nc.SubOpt{
+		nc.DeliverAll(),
+		nc.AckExplicit(),
+	}
 
-	conn, err := nc.Connect(path)
+	jsConfig := nats.JetStreamConfig{
+		Disabled:         false,
+		AutoProvision:    true,
+		ConnectOptions:   nil,
+		SubscribeOptions: subscribeOptions,
+		PublishOptions:   nil,
+		TrackMsgId:       false,
+		AckAsync:         false,
+		DurablePrefix:    "",
+	}
+
+	conn, err := nc.Connect(natsURL)
 	if err != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 		defer cancel()
 
-		logs.Error(ctx, "timeline service", "Failed to connect to Nats server", err)
-	}
-
-	js, err := conn.JetStream()
-	if err != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
-		defer cancel()
-
-		logs.Error(ctx, "timeline service", "Failed to get JetStream context", err)
-	}
-
-	streamConfig := &nc.StreamConfig{
-		Name:      "tweet-stream",
-		Subjects:  []string{"tweet.*"},
-		Retention: nc.LimitsPolicy,
-		Storage:   nc.FileStorage, // or nats.MemoryStorage
-		Replicas:  1,              // Number of replicas
-	}
-
-	_, err = js.AddStream(streamConfig)
-	if err != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
-		defer cancel()
-
-		logs.Error(ctx, "timeline service", "Failed to get add Stream", err)
+		logs.Error(ctx, service, "Failed to connect to Nats server", err)
 	}
 
 	configPub := nats.PublisherConfig{
-		URL:         path,
+		URL:         natsURL,
 		NatsOptions: options,
 		Marshaler:   marshaler,
 		JetStream:   jsConfig,
 	}
 
-	publisher, err := nats.NewPublisherWithNatsConn(conn, configPub.GetPublisherPublishConfig(), logger)
+	publisher, err := nats.NewPublisher(configPub, logger)
 	if err != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 		defer cancel()
 
-		logs.Error(ctx, "timeline service", "publisher: connection to message broker", "status", err)
+		logs.Error(ctx, service, "publisher: connection to message broker", "status", err)
 	}
 
 	configSub := nats.SubscriberConfig{
-		URL:         path,
-		NatsOptions: options,
-		JetStream:   jsConfig,
+		URL:            natsURL,
+		CloseTimeout:   30 * time.Second,
+		AckWaitTimeout: 30 * time.Second,
+		NatsOptions:    options,
+		Unmarshaler:    marshaler,
+		JetStream:      jsConfig,
 	}
 
 	subscriber, err := nats.NewSubscriberWithNatsConn(conn, configSub.GetSubscriberSubscriptionConfig(), logger)
@@ -87,10 +81,10 @@ func NewMsgBroker(path string, logs *logger.Logger) *MsgBroker {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*400)
 		defer cancel()
 
-		logs.Error(ctx, "timeline service", "subscriber: connection to message broker", "status", err)
+		logs.Error(ctx, service, "subscriber: connection to message broker", "status", err)
 	}
 
-	return &MsgBroker{pub: publisher, sub: subscriber, logs: logs}
+	return &MsgBroker{name: service, pub: publisher, sub: subscriber, logs: logs}
 }
 
 func (m *MsgBroker) PublishMessages(topic string, msg *message.Message) {
@@ -100,11 +94,11 @@ loop:
 	for {
 		select {
 		case <-ctx.Done():
-			m.logs.Info(ctx, "timeline service", "publish message", "status", "conxtext timeout", "message ID", msg.UUID)
+			m.logs.Info(ctx, m.name, "publish message", "status", "conxtext timeout", "message ID", msg.UUID)
 			break loop
 		default:
 			if err := m.pub.Publish(topic, msg); err != nil {
-				m.logs.Info(ctx, "timeline service", "publish message", "status", err, "message ID", msg.UUID)
+				m.logs.Info(ctx, m.name, "publish message", "status", err, "topic", topic, "message ID", msg.UUID)
 			} else {
 				break loop
 			}
@@ -113,18 +107,22 @@ loop:
 	}
 }
 
-func (m *MsgBroker) SubscribeGetFollowers(ctx context.Context) {
+func (m *MsgBroker) SubscribeEvents(topic string) (<-chan *message.Message, error) {
 
-	messages, err := m.sub.Subscribe(ctx, "get_followers")
+	ctx := context.Background()
+	messages, err := m.sub.Subscribe(ctx, topic)
 	if err != nil {
-		m.logs.Error(ctx, "timeline service", "subscriber: can't subscribe get_followers", "status", err)
+
+		m.logs.Error(ctx, m.name, "subscriber: can't subscribe to "+topic, "status", err)
+		return nil, err
 	}
 
-	go func() {
-		for msg := range messages {
-			m.logs.Info(ctx, "timeline service", "Message ID get followers", msg.UUID, string(msg.Payload))
-		}
-	}()
+	return messages, err
+
+}
+
+func (m *MsgBroker) Close() {
+	m.sub.Close()
 }
 
 type Header struct {
