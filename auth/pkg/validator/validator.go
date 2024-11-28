@@ -64,7 +64,7 @@ func ValidateEmail(v *Validator, email string) {
 
 func ValidateName(v *Validator, name string) {
 	v.Check(name != "", "name", "must be provided")
-	v.Check(utf8.RuneCountInString(name) < 5, "name", "name must be longer than 5 characters")
-	v.Check(utf8.RuneCountInString(name) > 200, "name", "name must be shorter")
+	v.Check(utf8.RuneCountInString(name) < 5, "name", "must be longer than 5 characters")
+	v.Check(utf8.RuneCountInString(name) > 200, "name", "must be shorter")
 	v.Check(Matches(name, NameRX), "name", "must be a valid name")
 }
